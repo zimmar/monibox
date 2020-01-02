@@ -1,0 +1,1 @@
+INSERT INTO log_polldstat (id, enabled, status, lastrun, nextrun) VALUES(1, 0, '', 0, 0);

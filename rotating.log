@@ -1,0 +1,6 @@
+2019-12-29 10:44:29,649 - t:/develop/monibox/application/logs/polld.log - ERROR - There was a problem querying the TSM Server dehze01-lxs001
+2019-12-29 10:44:29,650 - t:/develop/monibox/application/logs/polld.log - INFO - ---------CFG_PYTSM_SCHEDULES_RUNNING_ADMIN - Running Admin Schedules
+2019-12-29 10:44:29,717 - t:/develop/monibox/application/logs/polld.log - ERROR - There was a problem querying the TSM Server dehze01-lxs001
+2019-12-29 10:44:29,717 - t:/develop/monibox/application/logs/polld.log - INFO - needed 0:00:02.903746 seconds for this run
+2019-12-29 10:44:29,717 - t:/develop/monibox/application/logs/polld.log - INFO - sleeping for 897 seconds ...
+2019-12-29 10:44:29,717 - t:/develop/monibox/application/logs/polld.log - INFO - next run will be at 10:59:26

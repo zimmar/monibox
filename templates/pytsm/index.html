@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load trans_label %}
+{% load pytsm_tags %}
+
+{% block page_content %}
+    <div class="container-fluid">
+        {% for server in servers %}
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">{{ server }}</h1>
+
+            </div>
+
+            <div class="row">
+
+                {% for ovb in overviewbox %}
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-left-primary shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">{{ ovb.cfg_pytsm_base_label|trans }} </div>
+                                        <table>
+                                            {% for ovv in overview %}
+                                                {% if ovb.cfg_pytsm_base_label == ovv.cfg_pytsm_overview_parent__cfg_pytsm_base_label %}
+
+                                                    <div class="text-xl-left mb-0 font-weight-bold text-gray-800">
+                                                        <tr>
+                                                            <td>
+                                                                <a href="overview_table/{{ ovb.cfg_pytsm_base_name }}/{{ ovv.cfg_pytsm_base_name }}">{{ ovv.cfg_pytsm_base_label|trans }}</a>
+                                                            </td>
+                                                            <td align="right">
+                                                                {% overview_value ovv.cfg_pytsm_base_name server %}
+                                                            </td>
+                                                        </tr>
+                                                    </div>
+                                                {% endif %}
+
+                                            {% endfor %}
+                                        </table>
+                                        <div class="col-auto">
+                                            {% if ovb.cfg_pytsm_base_name == "CFG_PYTSM_HEALTH_DATA" %}
+                                                <i class="fas fa-file-medical-alt fa-2x text-gray-500"></i>
+                                            {% elif ovb.cfg_pytsm_base_name == "CFG_PYTSM_DATABASE" %}
+                                                <i class="fas fa-database fa-2x text-gray-500"></i>
+                                            {% elif ovb.cfg_pytsm_base_name == "CFG_PYTSM_TOTALDATA" %}
+                                                <i class="fas fa-table fa-2x text-gray-500"></i>
+                                            {% elif ovb.cfg_pytsm_base_name == "CFG_PYTSM_SCHEDULES" %}
+                                                <i class="fas fa-clock fa-2x text-gray-500"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+        {% endfor %}
+    </div>
+{% endblock %}
