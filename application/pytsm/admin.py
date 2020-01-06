@@ -30,6 +30,28 @@ def disable_check(modeladmin, request, queryset):
 disable_check.short_description = "Disable selected Server"
 
 
+def enable_lib_client(modeladmin, request, queryset):
+    """
+    Admin action: set check true
+    """
+    queryset.update(cfg_pytsm_overview_notforlibclient=True)
+
+
+enable_lib_client.short_description = "Enable lib client"
+
+
+def disable_lib_client(modeladmin, request, queryset):
+    """
+    Admin action: set check false
+    """
+    queryset.update(cfg_pytsm_overview_notforlibclient=False)
+
+
+disable_lib_client.short_description = "Disable lib client"
+
+
+
+
 class CfgPytsmColorsAdmin(CustomModelAdminMixin, admin.ModelAdmin):
     search_fields = ('cfg_pytsm_colors_name',)
 
@@ -42,6 +64,7 @@ class CfgPytsmServerAdmin(CustomModelAdminMixin, admin.ModelAdmin):
     list_filter = ('cfg_pytsm_server_libraryclient', 'cfg_pytsm_server_default', 'cfg_pytsm_server_checks')
     search_fields = ('cfg_pytsm_server_servername', 'cfg_pytsm_server_instanzname')
     actions = CustomModelAdminMixin.actions + [disable_check, enable_check]
+    list_display = CfgPytsmServer.display_list()
 
 
 class CfgPytsmOverviewboxAdmin(CustomModelAdminMixin, admin.ModelAdmin):
@@ -51,6 +74,8 @@ class CfgPytsmOverviewboxAdmin(CustomModelAdminMixin, admin.ModelAdmin):
 class CfgPytsmOverviewAdmin(CustomModelAdminMixin, admin.ModelAdmin):
     list_filter = ('cfg_pytsm_overview_notforlibclient', 'cfg_pytsm_overview_parent')
     search_fields = ('cfg_pytsm_overview_name',)
+    list_display = CfgPytsmOverview.display_list()
+    actions = CustomModelAdminMixin.actions + [enable_lib_client, disable_lib_client]
 
 
 class CfgPytsmMainmenuAdmin(CustomModelAdminMixin, admin.ModelAdmin):

@@ -75,7 +75,6 @@ class CustomModelAdminMixin(object):
         # if 'trans_parent' in self.list_display:
         #     excludelist.insert(1,'_parent')
 
-        print (excludelist)
         fields = model._meta.fields
 
         self.list_display += [field.name for field in model._meta.fields if (((field.name)[(field.name).rfind("_"):]) not in excludelist)]

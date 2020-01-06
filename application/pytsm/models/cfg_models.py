@@ -24,6 +24,9 @@ class CfgPytsmColors(models.Model):
         verbose_name = 'Color'
         verbose_name_plural = 'Colors'
 
+    def display_list(self):
+        return ['cfg_pytsm_colors_name', 'cfg_pytsm_colors_value']
+
 
 class CfgPytsmConfig(models.Model):
     """
@@ -44,6 +47,9 @@ class CfgPytsmConfig(models.Model):
         db_table = 'cfg_pytsm_config'
         verbose_name = 'Config'
         verbose_name_plural = 'Configs'
+
+    def display_list(self):
+        return ['cfg_pytsm_config_confkey', 'cfg_pytsm_config_confval', 'cfg_pytsm_config_description']
 
 
 class CfgPytsmServer(models.Model):
@@ -95,6 +101,10 @@ class CfgPytsmServer(models.Model):
 
         return _name
 
+    @classmethod
+    def display_list(cls):
+        return ['cfg_pytsm_server_servername', 'cfg_pytsm_server_instanzname', 'cfg_pytsm_server_ip', 'cfg_pytsm_server_port', 'cfg_pytsm_server_default', 'cfg_pytsm_server_checks']
+
 
 class CfgPytsmOverviewbox(CfgTsmBaseMixin):
     """
@@ -102,6 +112,7 @@ class CfgPytsmOverviewbox(CfgTsmBaseMixin):
     """
 
     cfg_pytsm_overviewbox_id = models.SmallAutoField(primary_key=True)
+    cfg_pytsm_overviewbox_icon = models.CharField(max_length=35, null=True, blank=True)
 
     class Meta:
         db_table = 'cfg_pytsm_overviewbox'
@@ -136,6 +147,10 @@ class CfgPytsmOverview(CfgTsmBaseMixin, CfgTsmAlertMixin):
                                                   help_text=const.H_CFG_PYTSM_OVERVIEW_PARENT,
                                                   verbose_name=_('Parent'))
 
+    @classmethod
+    def display_list(cls):
+        return ['cfg_pytsm_base_label', 'cfg_pytsm_overview_unit', 'cfg_pytsm_overview_notforlibclient', 'cfg_pytsm_overview_pollfreq']
+
 
 class CfgPytsmMainmenu(CfgTsmBaseMixin):
     """
@@ -158,6 +173,7 @@ class CfgPytsmQueries(CfgTsmBaseMixin, CfgTsmAlertMixin):
         ('s', 'snapshot'),
         ('u', 'update'),
     ]
+
 
 
     cfg_pytsm_queries_id = models.BigAutoField(primary_key=True)
@@ -285,3 +301,6 @@ class LogPytsmPolldstat(models.Model):
                                                        verbose_name=_('Lastrun'))
     log_pytsm_polldstat_nextrun = models.DateTimeField(null=False, help_text=const.H_CFG_PYTSM_LOGPOLLDSTAT_NEXTRUN,
                                                        verbose_name=_('Nextrun'))
+
+    def display_list(self):
+        pass

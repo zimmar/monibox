@@ -76,7 +76,11 @@ CFG_LABELS = {
     # Tabelle CfgOverview
     "LB_PYTSM_TOTAL_DATA_STORED": _("Total data stored"),
     "LB_PYTSM_TOTAL_DATA_BACKUPED": _("Totel data backuped"),
-    "LB_PYTSM_TOTAL_DATA_ARCHIVED": _("Total Data archived"),
+    "LB_PYTSM_TOTAL_DATA_COPY_BACKUPED": _("Totel data copy backuped"),
+
+    "LB_PYTSM_TOTAL_DATA_ARCHIVED": _("Total data archived"),
+    "LB_PYTSM_TOTAL_DATA_COPY_ARCHIVED": _("Total data copy archived"),
+
     'LB_PYTSM_HEALTH_DATA_SCRATCH_TAPES': _("Scratch Tapes"),
     'LB_PYTSM_HEALTH_DATA_VOLUMES_WITH_ERRORS': _("Volumes with errors"),
     'LB_PYTSM_HEALTH_DATA_UNAVAILABLE_VOLUMES': _("Unavailable Volumes"),
@@ -143,6 +147,10 @@ CFG_LABELS = {
     "LB_PYTSM_QUERIES_BACKUPSETS": _("Backupsets"),
     "LB_PYTSM_QUERIES_EXPORTS": _("Exports"),
     "LB_PYTSM_QUERIES_OFFSITE_TAPES": _("Offsite Tapes"),
+
+    "LB_PYTSM_HEALTH_NODES": _("Nodes Health"),
+    "LB_PYTSM_TOTAL_NODES": _("Total Nodes"),
+    "LB_PYTSM_TOTAL_NODES_LOCKED": _("Total Nodes Locked"),
 }
 
 CFG_NAMES = {

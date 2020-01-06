@@ -6,10 +6,12 @@ from django.utils.timezone import get_current_timezone
 
 from application.pytsm.models import CfgPytsmOverview, LogPytsmPolldstat, LogPytsmPolldlog
 from application.pytsm.utils.cfg_queries import get_configs, get_overview_queries, get_servers
+from application.pytsm.controller.core import dsmadmc
 from base.utils.logger import log
 
 from application.pytsm.const import CFG_LABELS
-from .create_table import create_table
+from .create_table import create_table, run_sql
+from application.pytsm.utils.import_mod import _import_module
 
 LOGLEVEL = {
     "NOTSET": 0,
@@ -75,7 +77,7 @@ class PollD(object):
             if (os.path.isfile(tsmclient)) and os.access(tsmclient, os.X_OK):
                 self._dsmadmc = tsmclient
             else:
-                log.error("dsmadmc is not executable.")
+                log.error("dsmadmc is not executable. %s", tsmclient)
                 # self.write_msg("dsamdmc is not executable.", "ERROR")
                 exit(4)
         else:
@@ -85,9 +87,14 @@ class PollD(object):
             #    "ERROR")
             exit(2)
 
+        self.init_queries() # Table load
+
+    def __del__(self):
+        pass
+
+    def init_queries(self):
         self._servers = get_servers()
-        log.info("Servers was loaded sucessfuley")
-        # self.write_msg("Servers was loaded successfully.", 'INFO')
+        log.info("Servers was loaded sucessfully")
 
         # Todo: Queries are not implemented
         # self._queries = get_queries()
@@ -95,9 +102,6 @@ class PollD(object):
 
         self._overviewqueries = get_overview_queries()
         log.info("Overviewqueries was loaded successfully.")
-
-    def __del__(self):
-        pass
 
     def getServerVersion(self, server, logfile="dsmerror.log"):
         print("------Serverversion from {}".format(server.cfg_pytsm_server_servername))
@@ -150,6 +154,18 @@ class PollD(object):
     def poll_query(self, query, server, ignore_pollfreq, timestamp):
         pass
 
+    def poll_drop_table(self, server):
+
+        # result = execute
+        tabelle_name = server.cfg_pytsm_server_tabelle(overview=True, cl=False)
+        tabelle_class = server.cfg_pytsm_server_tabelle(overview=True, cl=True)
+
+        db_module = _import_module("application.pytsm.models.{}".format(tabelle_name))
+        tabclass = getattr(db_module, tabelle_class)
+
+        tabclass.truncate()
+
+
     def poll_overview_query(self, query, server, timestamp):
         startquery = datetime.now()
         querytime = 0
@@ -157,58 +173,89 @@ class PollD(object):
         tablename = "res_overview_{servername}_{instanz}".format(servername=srv,
                                                                  instanz=server.cfg_pytsm_server_instanzname)
         log.info("---------{} - {}".format(query.cfg_pytsm_base_name, CFG_LABELS[query.cfg_pytsm_base_label]))
-        # create table
         create_table(tablename)
 
         # result = execute
-        result=""
+        tabelle_name = server.cfg_pytsm_server_tabelle(overview=True, cl=False)
+        tabelle_class = server.cfg_pytsm_server_tabelle(overview=True, cl=True)
+        try:
+            db_module = _import_module("application.pytsm.models.{}".format(tabelle_name))
+            tabclass = getattr(db_module, tabelle_class)
+        except:
+            # create    table
+            log.error("Tabelle {} could not create".format(tabelle_class))
+
+        dsmdmc = dsmadmc()
+        dsmdmc.open(server.cfg_pytsm_server_servername, server.cfg_pytsm_server_username, server.cfg_pytsm_server_password, "dsmerror.log")
+        result = dsmdmc.execute(query.cfg_pytsm_overview_query)
+        dsmdmc.close()
+
         if (result != ""):
             # insert
-            querytime = timedelta(datetime.now() - startquery)
+            for insertresult in result:
+                save_value_with_unit = "{} [{}]".format(insertresult[0], query.cfg_pytsm_overview_unit)
+                save_value = "{}".format(insertresult[0])
+                try: # insert
+                    log.info('Insert new value {} {}'.format(query.cfg_pytsm_overview_unit, insertresult[0]))
+                    obj = tabclass(time=datetime.now(), name=query.cfg_pytsm_base_name, results=save_value)
+                    obj.save()
+                except:
+                    log.info('Update value {} {}'.format(query.cfg_pytsm_overview_unit, insertresult[0]))
+                    obj = tabclass.objects.get(name=query.cfg_pytsm_base_name)
+                    obj.time = datetime.now()
+                    obj.results = save_value
+                    obj.save()
+
+            querytime = datetime.now() - startquery
             log.info ("insert row {} sec".format(querytime))
         else:
             log.error("There was a problem querying the TSM Server {}".format(server.cfg_pytsm_server_servername))
 
 
-
     def poll(self):
-
         sleeptime = int(self._configs['timeout'])
+        log.info("Sleeptime will be {} seconds".format(sleeptime))
 
         while True:
-
             # poller is enabled
             if self.isEnabled():
                 timestamp = datetime.now(tz=get_current_timezone())
                 log.info("R U N Start!\ntimestamp for this run is {}".format(timestamp))
                 self.setPollDStatus(status="running", lastrun="", nextrun="")
                 for srv in self._servers:
+
                     server = self._servers[srv]
-                    self._log_timeneeded = datetime.now()
-                    self._log_unchangedresult = 0
-                    self._log_pollfreqreached = 0
-                    self._log_updated = 0
 
-                    log.info("---quering server {}.".format(server.cfg_pytsm_server_servername))
+                    if server.cfg_pytsm_server_checks == True: # Server should be checked. (Run Queries True)
 
-                    log.info("------quering normal queries")
-                    for qry in self._queries:
-                        query = self._queries[qry]
-                        log.info("--------- query {}".format(CFG_LABELS[query.cfg_pytsm_overview_query]))
-                        self.poll_query(query, server, False, timestamp)
+                        self._log_timeneeded = datetime.now()
+                        self._log_unchangedresult = 0
+                        self._log_pollfreqreached = 0
+                        self._log_updated = 0
 
-                    log.info("------quering overview queries")
-                    if len(self._overviewqueries) > 0:
-                        for qry in self._overviewqueries:
-                            query = self._overviewqueries[qry]
-                            self.poll_overview_query(query, server, timestamp)
-                            # log.info("--------- overviewquery {}".format(CFG_LABELS[query.label]))
+                        log.info("---quering server {}.".format(server.cfg_pytsm_server_servername))
+                        log.info("------quering normal queries")
 
-                            self.poll_overview_query(query, server, timestamp)
-                            x = LogPytsmPolldlog(timestamp, server.cfg_pytsm_server_servername, self._log_updated)
+                        for qry in self._queries:
+                            query = self._queries[qry]
+                            # if server.cfg_pytsm_server_libraryclient == query.cfg_pytsm_queries_notforlibclient: #
+                            log.info("--------- query {}".format(CFG_LABELS[query.cfg_pytsm_overview_query]))
+                            self.poll_query(query, server, False, timestamp)
+
+                        log.info("------quering overview queries")
+
+                        if len(self._overviewqueries) > 0:
+
+                            for qry in self._overviewqueries:
+                                query = self._overviewqueries[qry]
+                                # if server.cfg_pytsm_server_libraryclient != query.cfg_pytsm_overview_notforlibclient:
+                                # log.info("--------- overviewquery {}".format(CFG_LABELS[query.label]))
+
+                                self.poll_overview_query(query, server, timestamp)
+                                x = LogPytsmPolldlog(timestamp, server.cfg_pytsm_server_servername, self._log_updated)
 
                 log.info("needed {} seconds for this run".format(datetime.now(tz=get_current_timezone()) - timestamp))
-                tempsleeptime = (timedelta(seconds=900) - (datetime.now(tz=get_current_timezone()) - timestamp)).seconds
+                tempsleeptime = (timedelta(seconds=300) - (datetime.now(tz=get_current_timezone()) - timestamp)).seconds
                 if tempsleeptime < 0:
                     tempsleeptime = 0
 
@@ -220,4 +267,6 @@ class PollD(object):
 
             else:
                 log.warn('PollD is disabled. Sleeping for {seconds} seconds'.format(seconds=sleeptime))
+                self.init_queries() # Table reload
+
                 sleep(sleeptime)

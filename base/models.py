@@ -11,6 +11,7 @@ class CfgTsmBaseMixin(models.Model):
     """
     Basisklasse (abstract):
     """
+    COLORS = {}
 
     class Meta:
         abstract = True
@@ -21,6 +22,9 @@ class CfgTsmBaseMixin(models.Model):
                                             verbose_name=_('Label'), default='label')
     cfg_pytsm_base_sortorder = models.SmallIntegerField(null=False, default=10, help_text=const.H_CFG_BASIS_SORT,
                                                         verbose_name=_('Sort'))
+
+    def display_list(self):
+        pass
 
     def __str__(self):
         return self.cfg_pytsm_base_label
@@ -38,29 +42,26 @@ class CfgTsmBaseMixin(models.Model):
         return rc
 
 
+
+
 class CfgTsmAlertMixin(models.Model):
     """
     Basisklasse Alarmierung (abstract)
     """
     ALERT_COMP = [
-        ('e', 'equal'),
-        ('l', 'less'),
-        ('ne', 'not equal'),
+        ('equal', _('equal')),
+        ('notequal', _('not equal')),
+        ('less', _('less')),
+        ('more', _('more')),
     ]
 
-    ALERT_VALUE = [
-        ('w', 'warn'),
-        ('a', 'alarm'),
-        ('O', 'ok'),
-
-    ]
 
     class Meta:
         abstract = True
 
-    cfg_pytsm_base_alert_cmp = models.CharField(max_length=2, choices=ALERT_COMP, null=True, blank=True, help_text=const.H_CFG_ALERT_CMP,
+    cfg_pytsm_base_alert_cmp = models.CharField(max_length=35, choices=ALERT_COMP, null=True, blank=True, help_text=const.H_CFG_ALERT_CMP,
                                                 verbose_name=_('Alert Compare'))
-    cfg_pytsm_base_alert_val = models.CharField(max_length=1, choices=ALERT_VALUE, null=True, blank=True, help_text=const.H_CFG_ALERT_VALUE,
+    cfg_pytsm_base_alert_val = models.CharField(max_length=35, null=True, blank=True, help_text=const.H_CFG_ALERT_VALUE,
                                                 verbose_name=_('Alert Value'))
     cfg_pytsm_base_alert_col = models.CharField(max_length=35, null=True, blank=True,
                                                 help_text=const.H_CFG_ALERT_COLUMN,

@@ -22,6 +22,6 @@ from base.admin import pytsm_admin_site
 
 urlpatterns = [
     path('', include(urls)),
-    path('admin/', admin.site.urls),
-    path('pytsm-admin/', pytsm_admin_site.urls),
+    path('admin/', admin.site.urls, name='admin'),
+    path('pytsm-admin/', pytsm_admin_site.urls, name='pytsm_admin'),
 ]

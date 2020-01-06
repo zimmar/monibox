@@ -32,5 +32,5 @@ def get_queries():
     tmp_queries = {}
     q_qs = CfgPytsmQueries.objects.all()
     for qs in q_qs:
-        tmp_queries[q_qs.cfg_pytsm_base_name] = qs
+        tmp_queries[qs.cfg_pytsm_base_name] = qs
     return tmp_queries

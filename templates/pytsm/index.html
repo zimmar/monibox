@@ -9,6 +9,10 @@
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0 text-gray-800">{{ server }}</h1>
 
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                    <p>{{ log.log_polldstat_enable }} {{ log.log_polldstat_status }} {{ log.log_polldstat_lastrun }} {{ log.log_polldstat_nextrun }}</p>
+            </div>
+
             </div>
 
             <div class="row">
@@ -30,7 +34,10 @@
                                                                 <a href="overview_table/{{ ovb.cfg_pytsm_base_name }}/{{ ovv.cfg_pytsm_base_name }}">{{ ovv.cfg_pytsm_base_label|trans }}</a>
                                                             </td>
                                                             <td align="right">
-                                                                {% overview_value ovv.cfg_pytsm_base_name server %}
+                                                                {% overview_value ovv.cfg_pytsm_base_name server as vvv %}
+                                                                {% autoescape off %}
+                                                                {{vvv}}
+                                                                {% endautoescape %}
                                                             </td>
                                                         </tr>
                                                     </div>
@@ -39,15 +46,8 @@
                                             {% endfor %}
                                         </table>
                                         <div class="col-auto">
-                                            {% if ovb.cfg_pytsm_base_name == "CFG_PYTSM_HEALTH_DATA" %}
-                                                <i class="fas fa-file-medical-alt fa-2x text-gray-500"></i>
-                                            {% elif ovb.cfg_pytsm_base_name == "CFG_PYTSM_DATABASE" %}
-                                                <i class="fas fa-database fa-2x text-gray-500"></i>
-                                            {% elif ovb.cfg_pytsm_base_name == "CFG_PYTSM_TOTALDATA" %}
-                                                <i class="fas fa-table fa-2x text-gray-500"></i>
-                                            {% elif ovb.cfg_pytsm_base_name == "CFG_PYTSM_SCHEDULES" %}
-                                                <i class="fas fa-clock fa-2x text-gray-500"></i>
-                                            {% endif %}
+
+                                            <i class="fas {{ ovb.cfg_pytsm_overviewbox_icon }} fa-2x text-gray-500"></i>
                                         </div>
                                     </div>
                                 </div>

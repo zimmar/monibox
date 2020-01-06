@@ -1,17 +1,34 @@
+# Copyright 2012-2014 VPAC
+#
+# This file is part of pytsm.
+#
+# pytsm is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# pytsm is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with pytsm.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 from __future__ import unicode_literals
-
-
-from pytz import unicode
-from six.moves import configparser
 
 import subprocess
 import sys
 import string
-import os
 import re
 import csv
+
+from pyparsing import unicode
 from django.conf import settings
+
+from application.pytsm.utils.cfg_queries import get_configs, get_overview_queries, get_servers, get_queries
+
+from application.pytsm.models import LogPytsmPolldlog, CfgPytsmConfig, CfgPytsmServer, CfgPytsmOverview
 
 def _default_message_handler(msg_prefix, msg_number, msg_type, msg_text):
     sys.stderr.write("%s%s%s %s\n" %
@@ -25,10 +42,6 @@ blacklist_msg_numbers = {
     '0944',  # ANR0944E QUERY PROCESS: No active processes found.
     '2034',  # ANR2034E SELECT: No match found using this criteria.
     '8001',  # ANS8001I Return code 11
-    '2034',  # dsmadmc runs correctly but result is empty (e.g. processes)
-    '1017',  # Systemfehler
-    '8023',
-
 }
 
 
@@ -89,18 +102,34 @@ else:
 
 class dsmadmc(object):
 
+    _servers = {}
+    _queries = {}
+    _overviews = {}
+    _configs = {}
+
     def __init__(self):
         self.message_handler = _default_message_handler
+        _configs = get_configs()
+        _servers = get_servers()
+        _queries = get_queries()
+        _overviews = get_overview_queries()
 
     def open(self, server, user, password, logfile):
         self.server = server
         self.user = user
         self.password = password
         self.logfile = logfile
-        print("Instanz wwurde geöffnet.")
+        print ("------ Neue server instanz öffnen")
+
+    def open2(self, server):
+        self._servers = get_servers()
+        self._configs = get_configs()
+        self._overviews = get_overview_queries()
+        self._queries = get_queries()
+        self.server = server
 
     def close(self):
-        print("Instanz geschlossen.")
+        pass
 
     def set_message_handler(self, message_handler):
         self.message_handler = message_handler
@@ -108,46 +137,34 @@ class dsmadmc(object):
     def _message(self, msg_prefix, msg_number, msg_type, msg_text):
         self.message_handler(msg_prefix, msg_number, msg_type, msg_text)
 
-    def auto_open(self, server):
-        configfile = os.path.join(os.getenv('HOME'), '.pytsm', 'pytsm.conf')
-        logfile = os.path.join(os.getenv('HOME'), '.pytsm', 'dsmerror.log')
-        config = configparser.RawConfigParser()
-        config.read(configfile)
-        if server is None:
-            server = config.get("main", 'default_server')
-        user = config.get(server, 'user')
-        password = config.get(server, 'password')
-        self.open(server, user, password, logfile)
-
     def execute(self, command, args=None):
+        print("------command '{}' wird ausgeführt.".format(command))
         server = self.server
         user = self.user
         password = self.password
         logfile = self.logfile
 
+        print("------Info: {}".format(server))
+
         if args is not None:
             command = command % self.literal(args)
-
-        command = command.replace('NOTEQUAL', '<>')
-        command = command.replace('EQUAL', '==')
-        command = command.replace('LESS', "<")
-
-        print(command)
 
         if not settings.BASE_DIR:
             BASE_DIR = "T:/develop/monibox"
         else:
             BASE_DIR = settings.BASE_DIR
 
+
         if sys.platform == 'win32':
             cmd = [
                 "C:/Program Files/Tivoli/TSM/baclient/dsmadmc",
-                "-optfile=%s" % (BASE_DIR + "/optfiles/" + server + ".opt"),
+                "-optfile=%s" % BASE_DIR + "/pytsm/optfiles/" + server + ".opt",
             ]
         else:
             cmd = [
                 "/usr/bin/dsmadmc",
             ]
+
 
         cmd += [
             "-servername=%s" % server,
@@ -155,7 +172,6 @@ class dsmadmc(object):
             "-password=%s" % password,
             "-ERRORLOGNAME=%s" % logfile,
             "-comma",  "-dataonly=yes", command]
-
 
         print(cmd)
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -165,7 +181,6 @@ class dsmadmc(object):
 
         for row in reader:
             _output_csv(row)
-            print(row)
             m = re.match("([A-Z][A-Z][A-Z])(\d\d\d\d)([IESWK]) (.*)$", row[0])
             if m is not None:
                 if m.group(2) not in blacklist_msg_numbers:
